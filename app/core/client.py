@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -20,9 +21,18 @@ class NewApiClient:
         self.site = site
         self.timeout = timeout
         self.cookie_jar = CookieJar()
-        self.opener = urllib.request.build_opener(
-            urllib.request.HTTPCookieProcessor(self.cookie_jar)
-        )
+        handlers = [urllib.request.HTTPCookieProcessor(self.cookie_jar)]
+
+        # 使用自定义 SSL 上下文，放宽 TLS 兼容性以适配更多服务器
+        ctx = ssl.create_default_context()
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+        try:
+            ctx.set_ciphers("DEFAULT@SECLEVEL=1")
+        except ssl.SSLError:
+            pass
+
+        handlers.append(urllib.request.HTTPSHandler(context=ctx))
+        self.opener = urllib.request.build_opener(*handlers)
         self._authenticated = False
 
     def test_connection(self) -> Dict[str, Any]:

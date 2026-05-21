@@ -214,6 +214,9 @@ class MainWindow(QMainWindow):
             self.site_panel.update_site_status(site_id, result["status"])
             if result["success"]:
                 self.log_panel.log_success(f"站点 '{site.name}' 测试成功: {result['message']}")
+                # 测试成功后自动将该站点设为源站，并加载模型价格列表
+                if site_id in self.site_panel.source_radio_buttons:
+                    self.site_panel.source_radio_buttons[site_id].setChecked(True)
             else:
                 self.log_panel.log_error(f"站点 '{site.name}' 测试失败: {result['message']}")
                 
