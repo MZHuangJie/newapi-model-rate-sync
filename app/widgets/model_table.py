@@ -16,6 +16,7 @@ class ModelTable(QWidget):
         self.all_models = []
         self.filtered_models = []
         self.checked_models = set()
+        self._site_name = ""
         self._updating_table = False
         self.init_ui()
 
@@ -25,9 +26,9 @@ class ModelTable(QWidget):
         layout.setSpacing(6)
 
         # Title
-        title = QLabel("模型价格列表")
-        title.setObjectName("panelTitle")
-        layout.addWidget(title)
+        self.title_lbl = QLabel("模型价格列表")
+        self.title_lbl.setObjectName("panelTitle")
+        layout.addWidget(self.title_lbl)
 
         # Search and Selection Controls Layout
         search_layout = QHBoxLayout()
@@ -55,8 +56,8 @@ class ModelTable(QWidget):
 
         # Table
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["选择", "模型名称", "计费模式", "价格摘要", "状态"])
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["选择", "模型名称", "计费模式", "价格摘要", "状态", "来源站点"])
         
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
@@ -64,6 +65,7 @@ class ModelTable(QWidget):
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
         
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
@@ -71,8 +73,13 @@ class ModelTable(QWidget):
         
         layout.addWidget(self.table)
 
-    def set_models(self, models: list):
+    def set_models(self, models: list, site_name: str = ""):
         self.all_models = models
+        self._site_name = site_name
+        if site_name:
+            self.title_lbl.setText(f"模型价格列表 — {site_name}")
+        else:
+            self.title_lbl.setText("模型价格列表")
         # Retain checked state if models exist in the new list, else clear
         new_names = {m.name for m in models}
         self.checked_models = self.checked_models.intersection(new_names)
@@ -154,6 +161,11 @@ class ModelTable(QWidget):
             status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             status_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
+            # 来源站点 (column 5)
+            site_item = QTableWidgetItem(self._site_name)
+            site_item.setFlags(site_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            site_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+
             # Highlighting for unset models
             if model.billing_mode == "unset":
                 warning_color = "#f59e0b"
@@ -167,6 +179,7 @@ class ModelTable(QWidget):
             self.table.setItem(idx, 2, mode_item)
             self.table.setItem(idx, 3, summary_item)
             self.table.setItem(idx, 4, status_item)
+            self.table.setItem(idx, 5, site_item)
 
         # Wire check box change
         self.table.itemChanged.connect(self.on_item_changed)

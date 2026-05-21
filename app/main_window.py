@@ -157,6 +157,7 @@ class MainWindow(QMainWindow):
         if not site:
             return
             
+        self._current_source_site_name = site.name
         self.log_panel.log_info(f"选择源站: '{site.name}'，正在加载该站点的模型价格...")
         
         # Load models for this source site in background
@@ -166,7 +167,7 @@ class MainWindow(QMainWindow):
         self.load_models_worker.start()
 
     def on_models_loaded(self, models):
-        self.model_table.set_models(models)
+        self.model_table.set_models(models, site_name=self._current_source_site_name)
         # Clear selected models cache
         self.pricing_editor.set_selected_models([])
         self.log_panel.log_success(f"成功加载模型价格列表，共计 {len(models)} 个模型。")
